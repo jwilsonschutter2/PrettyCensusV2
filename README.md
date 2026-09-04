@@ -2,6 +2,8 @@
 
 This build replaces the Mapping Option placeholder with a Mapbox GL JS choropleth workflow.
 
+https://jwilsonschutter2.github.io/PrettyCensusV2/
+
 ## Run
 Serve this folder through a local web server or GitHub Pages. Do not open index.html directly with file:// because browser fetch and CORS rules may block API and tile requests.
 
