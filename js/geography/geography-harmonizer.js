@@ -10,7 +10,7 @@ window.PrettyCensusHarmonizer = (() => {
       const worker = new Worker("js/geography/geography-harmonizer-worker.js");
       worker.onmessage = event => { worker.terminate(); event.data.error ? reject(new Error(event.data.error)) : resolve(event.data); };
       worker.onerror = event => { worker.terminate(); reject(new Error(event.message || "Relationship worker failed.")); };
-      worker.postMessage({ sourceFeatures: input.sourceGeoJson.features, targetFeatures: input.targetGeoJson.features, options: input.options });
+      worker.postMessage({ sourceFeatures: input.sourceGeoJson.features, targetFeatures: input.targetGeoJson.features, level: input.level, options: input.options });
     });
   }
   async function relationshipData(input) {
@@ -73,7 +73,7 @@ window.PrettyCensusHarmonizer = (() => {
       allocatedTotal, allocationError: eligibleTotal ? Math.abs(allocatedTotal - eligibleTotal) / Math.abs(eligibleTotal) : 0,
       fallbackValueShare: eligibleTotal ? Math.abs(fallbackValue) / Math.abs(eligibleTotal) : 0,
       sliversExcluded: workerData.sliversExcluded || 0, intersectionErrors: workerData.intersectionErrors || 0,
-      directGeometryChanged: workerData.directGeometryChanged || 0, diagnostics: workerData.diagnostics || [] };
+      directGeometryChanged: workerData.directGeometryChanged || 0, textCandidatesTested: workerData.textCandidatesTested || 0, spatialCandidatesTested: workerData.spatialCandidatesTested || 0, diagnostics: workerData.diagnostics || [] };
     const classes = classify(records);
     input.targetGeoJson.features.forEach((feature, index) => {
       const id = PrettyCensusGeoid.fromFeature(feature, input.level), type = classes.targetType(id), sources = provenance.get(id) || [];

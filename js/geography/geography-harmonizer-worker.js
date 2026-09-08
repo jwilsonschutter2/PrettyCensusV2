@@ -1,87 +1,75 @@
-/* PrettyCensus source-to-target relationship worker with configurable fallbacks. */
-importScripts("https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js");
+/* Text-first candidate selection, followed by authoritative geometry confirmation. */
+importScripts(
+  "https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js",
+  "../geography/geoid-candidate-index.js"
+);
 self.onmessage = event => {
   try { self.postMessage(build(event.data)); }
   catch (error) { self.postMessage({ error: error.message || String(error) }); }
 };
-function build({ sourceFeatures, targetFeatures, options = {} }) {
-  const minShare = number(options.minSourceShare, 0.0001);
-  const cumulativeTarget = number(options.cumulativeTarget, 0.995);
-  const preferredCoverage = number(options.preferredCoverage, 0.95);
-  const maxDistanceKm = number(options.maxDistanceKm, 10);
-  const pointFallback = options.pointFallback !== false;
-  const nearestFallback = options.nearestFallback !== false;
-  const targetsById = new Map(targetFeatures.map((feature, index) => [id(feature), index]));
-  const grid = buildGrid(targetFeatures);
-  const targetPoints = targetFeatures.map(feature => safePoint(feature));
+function build({ sourceFeatures, targetFeatures, options = {}, level }) {
+  const minShare = finite(options.minSourceShare, 0.0001);
+  const cumulativeTarget = finite(options.cumulativeTarget, 0.995);
+  const preferredCoverage = finite(options.preferredCoverage, 0.95);
+  const minTextScore = finite(options.minTextScore, 40);
+  const useTextCandidates = options.useTextCandidates !== false;
+  const useWeakTail = options.useWeakTail === true;
+  const textIndex = PrettyCensusCandidateIndex.build(targetFeatures, level);
+  const spatialIndex = buildGrid(targetFeatures);
   const relationships = [], diagnostics = [];
-  let sliversExcluded = 0, intersectionErrors = 0, directGeometryChanged = 0;
+  let textCandidatesTested = 0, spatialCandidatesTested = 0, sliversExcluded = 0, intersectionErrors = 0;
+
   for (const source of sourceFeatures) {
-    const sourceId = id(source), sameIndex = targetsById.get(sourceId), sourceArea = safeArea(source);
-    if (sameIndex !== undefined) {
-      const overlap = safeIntersection(source, targetFeatures[sameIndex]);
-      if (overlap.error) intersectionErrors++;
-      const geometryOverlap = sourceArea && overlap.area ? Math.min(1, overlap.area / sourceArea) : null;
-      const geometryChanged = geometryOverlap === null || geometryOverlap < 0.999;
-      if (geometryChanged) directGeometryChanged++;
-      relationships.push(record(sourceId, sourceId, 1, 1, overlap.area, "direct-geoid", "high", geometryChanged, geometryOverlap));
+    const sourceId = String(source.properties?.__pc_geoid || "");
+    const parsedSource = PrettyCensusCandidateIndex.parse(sourceId, level);
+    if (!parsedSource) { diagnostics.push({ source: sourceId, reason: "invalid-geoid" }); continue; }
+    const same = textIndex.byGeoid.get(sourceId);
+    if (same !== undefined) {
+      relationships.push(make(sourceId, sourceId, 1, 1, 0, "direct-geoid", 100, "high"));
       continue;
     }
+    const sourceArea = safeArea(source);
     if (!sourceArea) { diagnostics.push({ source: sourceId, reason: "invalid-or-zero-area" }); continue; }
-    const candidates = queryGrid(grid, turf.bbox(source));
-    let overlaps = [];
-    for (const targetIndex of candidates) {
-      const target = targetFeatures[targetIndex], overlap = safeIntersection(source, target);
-      if (overlap.error) intersectionErrors++;
-      if (!overlap.area) continue;
-      const sourceShare = overlap.area / sourceArea, targetArea = safeArea(target);
-      overlaps.push({ target: id(target), sourceShare, targetShare: targetArea ? overlap.area / targetArea : 0, area: overlap.area });
+    const spatial = queryGrid(spatialIndex, turf.bbox(source));
+    const ranked = useTextCandidates
+      ? PrettyCensusCandidateIndex.candidates(parsedSource, textIndex, spatial, level, targetFeatures)
+      : spatial.map(index => ({ index, parsed: PrettyCensusCandidateIndex.parse(targetFeatures[index].properties?.__pc_geoid, level) }));
+    const overlaps = [];
+    for (const candidate of ranked) {
+      const score = PrettyCensusCandidateIndex.score(parsedSource, candidate.parsed);
+      if (!useWeakTail && score === 2) continue;
+      if (score > 0 && score < minTextScore && !spatial.includes(candidate.index)) continue;
+      if (score >= 40) textCandidatesTested++; else spatialCandidatesTested++;
+      const target = targetFeatures[candidate.index], result = intersect(source, target);
+      if (result.error) intersectionErrors++;
+      if (!result.area) continue;
+      const sourceShare = result.area / sourceArea, targetArea = safeArea(target);
+      overlaps.push({ target: String(target.properties?.__pc_geoid || ""), sourceShare,
+        targetShare: targetArea ? result.area / targetArea : 0, area: result.area, score });
     }
-    overlaps.sort((a, b) => b.sourceShare - a.sourceShare);
-    const accepted = []; let cumulative = 0;
-    for (const overlap of overlaps) {
-      if (overlap.sourceShare >= minShare || cumulative < cumulativeTarget) {
-        accepted.push(overlap); cumulative += overlap.sourceShare;
-      } else sliversExcluded++;
-    }
-    if (accepted.length) {
-      const confidence = cumulative >= preferredCoverage ? "medium" : cumulative >= 0.8 ? "low" : "very-low";
-      for (const overlap of accepted) relationships.push(record(sourceId, overlap.target, overlap.sourceShare, overlap.targetShare, overlap.area, "polygon-overlap", confidence, true, null, cumulative));
-      continue;
-    }
-    const sourcePoint = safePoint(source);
-    if (sourcePoint && pointFallback) {
-      const containing = targetFeatures.findIndex(target => safeContains(target, sourcePoint));
-      if (containing >= 0) {
-        relationships.push(record(sourceId, id(targetFeatures[containing]), 1, 0, 0, "point-on-surface-fallback", "low", true, null, 0));
-        continue;
-      }
-    }
-    if (sourcePoint && nearestFallback) {
-      let bestIndex = -1, bestDistance = Infinity;
-      targetPoints.forEach((point, index) => {
-        if (!point) return;
-        const distance = turf.distance(sourcePoint, point, { units: "kilometers" });
-        if (distance < bestDistance) { bestDistance = distance; bestIndex = index; }
-      });
-      if (bestIndex >= 0 && bestDistance <= maxDistanceKm) {
-        const r = record(sourceId, id(targetFeatures[bestIndex]), 1, 0, 0, "nearest-target-fallback", "very-low", true, null, 0);
-        r.distanceKm = bestDistance; relationships.push(r); continue;
-      }
-    }
-    diagnostics.push({ source: sourceId, reason: "unmatched-after-fallbacks" });
+    overlaps.sort((a, b) => b.sourceShare - a.sourceShare || b.score - a.score);
+    let cumulative = 0;
+    const accepted = overlaps.filter(item => {
+      const keep = item.sourceShare >= minShare || cumulative < cumulativeTarget;
+      if (keep) cumulative += item.sourceShare; else sliversExcluded++;
+      return keep;
+    });
+    if (!accepted.length) { diagnostics.push({ source: sourceId, reason: "no-confirmed-geographic-candidate" }); continue; }
+    const confidence = cumulative >= preferredCoverage && accepted.some(item => item.score >= 40)
+      ? "high" : cumulative >= preferredCoverage ? "medium" : cumulative >= 0.8 ? "low" : "very-low";
+    accepted.forEach(item => relationships.push(make(sourceId, item.target, item.sourceShare,
+      item.targetShare, item.area, item.score >= 40 ? "text-plus-polygon-overlap" : "polygon-overlap",
+      item.score, confidence, cumulative)));
   }
-  return { relationships, diagnostics, sliversExcluded, intersectionErrors, directGeometryChanged };
+  return { relationships, diagnostics, textCandidatesTested, spatialCandidatesTested, sliversExcluded, intersectionErrors };
 }
-function record(source, target, sourceShare, targetShare, intersectionArea, method, confidence, geometryChanged, geometryOverlap, observedCoverage = 1) {
-  return { source, target, sourceShare, targetShare, intersectionArea, direct: method === "direct-geoid", method, confidence, geometryChanged, geometryOverlap, observedCoverage, fallbackUsed: method.includes("fallback") };
+function make(source, target, sourceShare, targetShare, intersectionArea, method, textScore, confidence, observedCoverage = 1) {
+  return { source, target, sourceShare, targetShare, intersectionArea, method, textScore, confidence,
+    observedCoverage, direct: method === "direct-geoid", fallbackUsed: false };
 }
-function id(feature) { return String(feature.properties?.__pc_geoid || ""); }
-function number(value, fallback) { const n = Number(value); return Number.isFinite(n) ? n : fallback; }
+function finite(value, fallback) { const n = Number(value); return Number.isFinite(n) ? n : fallback; }
 function safeArea(feature) { try { const a = turf.area(feature); return Number.isFinite(a) && a > 0 ? a : 0; } catch (_) { return 0; } }
-function safeIntersection(a, b) { try { const i = turf.intersect(a, b); return { area: i ? safeArea(i) : 0, error: false }; } catch (_) { return { area: 0, error: true }; } }
-function safePoint(feature) { try { return turf.pointOnFeature(feature); } catch (_) { return null; } }
-function safeContains(feature, point) { try { return turf.booleanPointInPolygon(point, feature); } catch (_) { return false; } }
-function cells(box, size = 0.25) { const out = []; for (let x = Math.floor(box[0]/size); x <= Math.floor(box[2]/size); x++) for (let y = Math.floor(box[1]/size); y <= Math.floor(box[3]/size); y++) out.push(`${x}:${y}`); return out; }
-function buildGrid(features) { const grid = new Map(); features.forEach((feature, index) => { let box; try { box = turf.bbox(feature); } catch (_) { return; } cells(box).forEach(key => { if (!grid.has(key)) grid.set(key, []); grid.get(key).push(index); }); }); return grid; }
-function queryGrid(grid, box) { const found = new Set(); cells(box).forEach(key => (grid.get(key) || []).forEach(index => found.add(index))); return [...found]; }
+function intersect(a, b) { try { const x = turf.intersect(a, b); return { area: x ? safeArea(x) : 0, error: false }; } catch (_) { return { area: 0, error: true }; } }
+function cells(box, size = 0.25) { const out=[]; for(let x=Math.floor(box[0]/size);x<=Math.floor(box[2]/size);x++)for(let y=Math.floor(box[1]/size);y<=Math.floor(box[3]/size);y++)out.push(`${x}:${y}`); return out; }
+function buildGrid(features) { const grid=new Map(); features.forEach((f,i)=>{let b;try{b=turf.bbox(f);}catch(_){return;}cells(b).forEach(k=>{if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);});});return grid; }
+function queryGrid(grid, box) { const out=new Set();cells(box).forEach(k=>(grid.get(k)||[]).forEach(i=>out.add(i)));return[...out]; }
