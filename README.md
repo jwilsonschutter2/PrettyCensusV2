@@ -30,3 +30,7 @@ Create Change Map now builds a reusable source-to-target relationship matrix in 
 - Validation reports direct/renumbered/split/merge/complex/unmatched counts, excluded slivers, and allocation error.
 - Non-additive variables are restricted to Exact GEOID only. Medians and percentages are not area allocated.
 - Area-mode map generation stops when allocated additive totals differ from source totals by more than 1%.
+
+
+### Friendly naming and exports
+Variable metadata is maintained in `js/preset-table-library.js`. Each variable supports `displayName`, `shortName`, `exportName`, and `mapLabel`. CSV headers and GeoJSON properties use `exportName`; tables use `displayName`; mapping continues to use the friendly display label.

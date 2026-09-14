@@ -1,0 +1,56 @@
+/**
+ * Editable preset and variable naming library.
+ * Each variable supports displayName, shortName, exportName, and mapLabel.
+ */
+const PRESET_TABLE_LIBRARY = [
+  { name: 'Economic', items: [
+    { id: 'median-household-income', label: 'Median Household Income', variables: [{ id: 'B19013_001E', displayName: 'Median Household Income Estimate', shortName: 'Median Household Income', exportName: 'median_household_income_estimate', mapLabel: 'Median Household Income Estimate ($)' }, { id: 'B19013_002E', displayName: 'Median Household Income Margin of Error', shortName: 'Median Household Income MOE', exportName: 'median_household_income_margin_of_error', mapLabel: 'Median Household Income Margin of Error' }] },
+    { id: 'per_capita_income', label: 'Per Capita Income', variables: [{ id: 'B19301_001E', displayName: 'Per Capita Income', shortName: 'Per Capita Income', exportName: 'per_capita_income', mapLabel: 'Per Capita Income ($)' }] },
+    { id: 'median_home_value', label: 'Median Home Value', variables: [{ id: 'B25077_001E', displayName: 'Median Home Value', shortName: 'Median Home Value', exportName: 'median_home_value', mapLabel: 'Median Home Value ($)' }] },
+    { id: 'median_gross_rent', label: 'Median Gross Rent', variables: [{ id: 'B25064_001E', displayName: 'Median Gross Rent', shortName: 'Median Gross Rent', exportName: 'median_gross_rent', mapLabel: 'Median Gross Rent ($)' }] },
+    { id: 'civilian_labor_force', label: 'Civilian Labor Force', variables: [{ id: 'B23025_003E', displayName: 'Civilian Labor Force', shortName: 'Civilian Labor Force', exportName: 'civilian_labor_force', mapLabel: 'Civilian Labor Force' }] },
+    { id: 'population_below_poverty_level', label: 'Population Below Poverty Level', variables: [{ id: 'B17001_002E', displayName: 'Population Below Poverty Level', shortName: 'Population Below Poverty Level', exportName: 'population_below_poverty_level', mapLabel: 'Population Below Poverty Level' }] },
+    { id: 'household_income_brackets', label: 'Household Income Brackets', variables: [{ id: 'B19001_001E', displayName: 'Household Income Brackets', shortName: 'Household Income Brackets', exportName: 'household_income_brackets', mapLabel: 'Household Income Brackets' }] },
+    { id: 'median_year_structure_built', label: 'Median Year Structure Built', variables: [{ id: 'B25035_001E', displayName: 'Median Year Structure Built', shortName: 'Median Year Structure Built', exportName: 'median_year_structure_built', mapLabel: 'Median Year Structure Built' }] },
+    { id: 'rent_as_percentage_of_income', label: 'Rent as Percentage of Income', variables: [{ id: 'B25071_001E', displayName: 'Rent as Percentage of Income', shortName: 'Rent as Percentage of Income', exportName: 'rent_as_percentage_of_income', mapLabel: 'Rent as Percentage of Income' }] },
+    { id: 'gini_index_of_income_inequality', label: 'Gini Index of Income Inequality', variables: [{ id: 'B19083_001E', displayName: 'Gini Index of Income Inequality', shortName: 'Gini Index of Income Inequality', exportName: 'gini_index_of_income_inequality', mapLabel: 'Gini Index of Income Inequality' }] },
+  ] },
+  { name: 'Transportation and Vehicles', items: [
+    { id: 'transportation-summary', label: 'Transportation Summary', variables: [{ id: 'B08134_001E', displayName: 'Transportation to Work Total', shortName: 'Transportation to Work Total', exportName: 'transportation_to_work_total', mapLabel: 'Transportation to Work Total' }, { id: 'B08134_002E', displayName: 'Car, Truck, or Van', shortName: 'Car, Truck, or Van', exportName: 'car_truck_or_van', mapLabel: 'Car, Truck, or Van' }, { id: 'B08134_003E', displayName: 'Public Transportation', shortName: 'Public Transportation', exportName: 'public_transportation', mapLabel: 'Public Transportation' }] },
+    { id: 'means_of_transportation_to_work', label: 'Means of Transportation to Work', variables: [{ id: 'B08301_001E', displayName: 'Means of Transportation to Work', shortName: 'Means of Transportation to Work', exportName: 'means_of_transportation_to_work', mapLabel: 'Means of Transportation to Work' }] },
+    { id: 'workers_by_travel_time_to_work', label: 'Workers by Travel Time to Work', variables: [{ id: 'B08006_001E', displayName: 'Workers by Travel Time to Work', shortName: 'Workers by Travel Time to Work', exportName: 'workers_by_travel_time_to_work', mapLabel: 'Workers by Travel Time to Work' }] },
+    { id: 'vehicle_availability', label: 'Vehicle Availability', variables: [{ id: 'B08101_001E', displayName: 'Vehicle Availability', shortName: 'Vehicle Availability', exportName: 'vehicle_availability', mapLabel: 'Vehicle Availability' }] },
+    { id: 'commute_mode_share', label: 'Commute Mode Share', variables: [{ id: 'B08103_001E', displayName: 'Commute Mode Share', shortName: 'Commute Mode Share', exportName: 'commute_mode_share', mapLabel: 'Commute Mode Share' }] },
+    { id: 'travel_time_to_work', label: 'Travel Time to Work', variables: [{ id: 'B08105_001E', displayName: 'Travel Time to Work', shortName: 'Travel Time to Work', exportName: 'travel_time_to_work', mapLabel: 'Travel Time to Work' }] },
+    { id: 'carpooling_statistics', label: 'Carpooling Statistics', variables: [{ id: 'B08111_001E', displayName: 'Carpooling Statistics', shortName: 'Carpooling Statistics', exportName: 'carpooling_statistics', mapLabel: 'Carpooling Statistics' }] },
+    { id: 'public_transportation_usage', label: 'Public Transportation Usage', variables: [{ id: 'B08113_001E', displayName: 'Public Transportation Usage', shortName: 'Public Transportation Usage', exportName: 'public_transportation_usage', mapLabel: 'Public Transportation Usage' }] },
+    { id: 'commute_distance', label: 'Commute Distance', variables: [{ id: 'B08119_001E', displayName: 'Commute Distance', shortName: 'Commute Distance', exportName: 'commute_distance', mapLabel: 'Commute Distance' }] },
+    { id: 'households_without_vehicles', label: 'Households Without Vehicles', variables: [{ id: 'B08201_001E', displayName: 'Households Without Vehicles', shortName: 'Households Without Vehicles', exportName: 'households_without_vehicles', mapLabel: 'Households Without Vehicles' }] },
+    { id: 'time_leaving_for_work', label: 'Time Leaving for Work', variables: [{ id: 'B08303_001E', displayName: 'Time Leaving for Work', shortName: 'Time Leaving for Work', exportName: 'time_leaving_for_work', mapLabel: 'Time Leaving for Work' }] },
+  ] },
+  { name: 'Demographic', items: [
+    { id: 'population-by-sex', label: 'Population by Sex', variables: [{ id: 'B01001_002E', displayName: 'Male Population', shortName: 'Male Population', exportName: 'male_population', mapLabel: 'Male Population' }, { id: 'B01001_026E', displayName: 'Female Population', shortName: 'Female Population', exportName: 'female_population', mapLabel: 'Female Population' }] },
+    { id: 'median-age-by-sex', label: 'Median Age by Sex', variables: [{ id: 'B01002_002E', displayName: 'Median Age Male', shortName: 'Median Age Male', exportName: 'median_age_male', mapLabel: 'Median Age Male' }, { id: 'B01002_003E', displayName: 'Median Age Female', shortName: 'Median Age Female', exportName: 'median_age_female', mapLabel: 'Median Age Female' }] },
+    { id: 'total_population', label: 'Total Population', variables: [{ id: 'B01001_001E', displayName: 'Total Population', shortName: 'Total Population', exportName: 'total_population', mapLabel: 'Total Population' }] },
+    { id: 'median_age', label: 'Median Age', variables: [{ id: 'B01002_001E', displayName: 'Median Age', shortName: 'Median Age', exportName: 'median_age', mapLabel: 'Median Age' }] },
+    { id: 'race_total_population', label: 'Race: Total Population', variables: [{ id: 'B02001_001E', displayName: 'Race: Total Population', shortName: 'Race: Total Population', exportName: 'race_total_population', mapLabel: 'Race: Total Population' }] },
+    { id: 'hispanic_or_latino_origin', label: 'Hispanic or Latino Origin', variables: [{ id: 'B03002_001E', displayName: 'Hispanic or Latino Origin', shortName: 'Hispanic or Latino Origin', exportName: 'hispanic_or_latino_origin', mapLabel: 'Hispanic or Latino Origin' }] },
+    { id: 'educational_attainment_total', label: 'Educational Attainment: Total', variables: [{ id: 'B15003_001E', displayName: 'Educational Attainment: Total', shortName: 'Educational Attainment: Total', exportName: 'educational_attainment_total', mapLabel: 'Educational Attainment: Total' }] },
+    { id: 'total_population_estimate', label: 'Total Population Estimate', variables: [{ id: 'B01003_001E', displayName: 'Total Population Estimate', shortName: 'Total Population', exportName: 'total_population_estimate', mapLabel: 'Total Population Estimate' }] },
+    { id: 'household_types', label: 'Household Types', variables: [{ id: 'B11001_001E', displayName: 'Household Types', shortName: 'Household Types', exportName: 'household_types', mapLabel: 'Household Types' }] },
+    { id: 'children_under_18', label: 'Children Under 18', variables: [{ id: 'B09001_001E', displayName: 'Children Under 18', shortName: 'Children Under 18', exportName: 'children_under_18', mapLabel: 'Children Under 18' }] },
+    { id: 'poverty_by_age', label: 'Poverty by Age', variables: [{ id: 'B17020_001E', displayName: 'Poverty by Age', shortName: 'Poverty by Age', exportName: 'poverty_by_age', mapLabel: 'Poverty by Age' }] },
+    { id: 'overcrowded_housing', label: 'Overcrowded Housing', variables: [{ id: 'B25014_001E', displayName: 'Overcrowded Housing', shortName: 'Overcrowded Housing', exportName: 'overcrowded_housing', mapLabel: 'Overcrowded Housing' }] },
+  ] },
+  { name: 'Housing', items: [
+    { id: 'housing-occupancy', label: 'Housing Occupancy', variables: [{ id: 'B25002_002E', displayName: 'Occupied Housing Units', shortName: 'Occupied Housing Units', exportName: 'occupied_housing_units', mapLabel: 'Occupied Housing Units' }, { id: 'B25002_003E', displayName: 'Vacant Housing Units', shortName: 'Vacant Housing Units', exportName: 'vacant_housing_units', mapLabel: 'Vacant Housing Units' }] },
+    { id: 'housing-tenure', label: 'Housing Tenure', variables: [{ id: 'B25003_002E', displayName: 'Owner-Occupied Housing Units', shortName: 'Owner-Occupied Housing Units', exportName: 'owner_occupied_housing_units', mapLabel: 'Owner-Occupied Housing Units' }, { id: 'B25003_003E', displayName: 'Renter-Occupied Housing Units', shortName: 'Renter-Occupied Housing Units', exportName: 'renter_occupied_housing_units', mapLabel: 'Renter-Occupied Housing Units' }] },
+    { id: 'total_housing_units', label: 'Total Housing Units', variables: [{ id: 'B25001_001E', displayName: 'Total Housing Units', shortName: 'Total Housing Units', exportName: 'total_housing_units', mapLabel: 'Total Housing Units' }] },
+  ] },
+];
+
+function presetDefinitions(){return PRESET_TABLE_LIBRARY.flatMap(group=>group.items.map(item=>({...item,group:group.name})));}
+function variableDefinitions(){return presetDefinitions().flatMap(item=>item.variables);}
+function presetById(id){return presetDefinitions().find(item=>item.id===id);}
+const variableMetadata=Object.fromEntries(variableDefinitions().map(item=>[item.id,item]));
+function variableMeta(id){return variableMetadata[id]||{id,displayName:id,shortName:id,exportName:id,mapLabel:id};}

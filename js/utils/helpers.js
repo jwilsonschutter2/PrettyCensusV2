@@ -5,7 +5,7 @@
 
 function digitsOnly(s){return(s||"").replace(/\D+/g,"");}
 
-function allPresetTableIds(){return Array.from(new Set(presetGroups.flatMap(g=>g.items)));}
+function allPresetTableIds(){return Array.from(new Set(variableDefinitions().map(item=>item.id)));}
 
 function escapeHtml(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
 

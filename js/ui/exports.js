@@ -1,14 +1,8 @@
-/**
- * CSV export helpers and export filename builders.
- * Auto-extracted from the original scripts.js to improve maintainability.
- */
-
-function currentRowsAsObjects(){return apiArrayToObjects(currentFetchedData);}
-
-function suggestCurrentCsvName(){return `census_${selectedDataset.replaceAll('/','_')}_${selectedYear}_${geoLevel}.csv`;}
-
-function suggestComparisonCsvName(){return `comparison_${selectedDataset.replaceAll('/','_')}_${$("comparisonYearSelect").value}_to_${selectedYear}_${geoLevel}.csv`;}
-
-function exportRowsToCsv(rows,filename){if(!rows||!rows.length)return;const headers=Object.keys(rows[0]);const csv=[headers.join(","),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(","))].join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();URL.revokeObjectURL(a.href);a.remove();}
-
-function downloadGeoJson(featureCollection,filename){if(!featureCollection||featureCollection.type!=="FeatureCollection")return;const blob=new Blob([JSON.stringify(featureCollection,null,2)],{type:"application/geo+json;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0);a.remove();}
+/** Friendly-name CSV and GeoJSON export helpers. */
+function currentRowsAsObjects(){return apiArrayToObjects(currentFetchedData)}
+function suggestCurrentCsvName(){return `census_${selectedDataset.replaceAll('/','_')}_${selectedYear}_${geoLevel}.csv`}
+function exportHeader(header){return variableMeta(header).exportName||header}
+function friendlyExportRow(row){return Object.fromEntries(Object.entries(row).map(([key,value])=>[exportHeader(key),value]))}
+function exportRowsToCsv(rows,filename){if(!rows||!rows.length)return;const clean=rows.map(friendlyExportRow),headers=Array.from(new Set(clean.flatMap(Object.keys)));const csv=[headers.map(csvEscape).join(","),...clean.map(row=>headers.map(h=>csvEscape(row[h])).join(","))].join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();URL.revokeObjectURL(a.href);a.remove()}
+function friendlyGeoJson(featureCollection){return {...featureCollection,features:featureCollection.features.map(feature=>({...feature,properties:friendlyExportRow(feature.properties||{})}))}}
+function downloadGeoJson(featureCollection,filename){if(!featureCollection||featureCollection.type!=="FeatureCollection")return;const output=friendlyGeoJson(featureCollection),blob=new Blob([JSON.stringify(output,null,2)],{type:"application/geo+json;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0);a.remove()}
