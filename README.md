@@ -30,3 +30,12 @@ Create Change Map now builds a reusable source-to-target relationship matrix in 
 - Validation reports direct/renumbered/split/merge/complex/unmatched counts, excluded slivers, and allocation error.
 - Non-additive variables are restricted to Exact GEOID only. Medians and percentages are not area allocated.
 - Area-mode map generation stops when allocated additive totals differ from source totals by more than 1%.
+
+
+### Project-area modal fixes
+
+The project-area instructions remain closed on page load and open only from the instructions button. The close button, backdrop, and Escape key close the modal. Manual geography selection is the default; the upload filter is opt-in. Minimum overlap at 10% is the default uploaded-area selection rule. The expanded all-sections preset library is installed.
+
+
+### Collapsible project area and reduced exports
+The Geography card defaults to normal selectors. The Uploaded Project Area button beside the heading opens or closes the upload panel. Mapping and change-map processing remove features outside the active uploaded GEOID list or specific tract/block-group selection before export. GeoJSON exports retain geometry plus only the fields required for the selected mapping/change-map output.

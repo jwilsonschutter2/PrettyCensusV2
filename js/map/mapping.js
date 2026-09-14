@@ -357,8 +357,11 @@
       const joined = attachValues(geojson, rows, topic, selection.level);
       if (!joined.values.size) throw new Error("The Census response did not contain numeric values to map.");
       if (!joined.matched) throw new Error("No boundary GEOIDs matched the Census API response.");
-      const breaks = quantileBreaks(Array.from(joined.values.values()), 5);
-      exportGeoJson = structuredClone(geojson);
+      const filteredGeoJson = filterFeatureCollectionToChosenGeography(geojson, selection.level);
+      if (!filteredGeoJson.features.length) throw new Error("No mapped features remain inside the chosen geography.");
+      geojson.features = filteredGeoJson.features;
+      const breaks = quantileBreaks(geojson.features.map(f=>Number(f.properties?.__value)).filter(Number.isFinite), 5);
+      exportGeoJson = compactFeatureCollection(structuredClone(geojson), ["__geoid","__value"]);
       window.prettyCensusCurrentGeoJSON = exportGeoJson;
       const geoBtn = el("exportMapGeoJsonBtn");
       if (geoBtn) geoBtn.disabled = false;
