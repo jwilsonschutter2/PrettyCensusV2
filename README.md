@@ -32,5 +32,6 @@ Create Change Map now builds a reusable source-to-target relationship matrix in 
 - Area-mode map generation stops when allocated additive totals differ from source totals by more than 1%.
 
 
-### Friendly naming and exports
-Variable metadata is maintained in `js/preset-table-library.js`. Each variable supports `displayName`, `shortName`, `exportName`, and `mapLabel`. CSV headers and GeoJSON properties use `exportName`; tables use `displayName`; mapping continues to use the friendly display label.
+### Project-area modal fixes
+
+The project-area instructions remain closed on page load and open only from the instructions button. The close button, backdrop, and Escape key close the modal. Manual geography selection is the default; the upload filter is opt-in. Minimum overlap at 10% is the default uploaded-area selection rule. The expanded all-sections preset library is installed.
