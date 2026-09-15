@@ -11,9 +11,9 @@ async function handleStateSelectChange(){selectedState=this.value;$("stateInput"
 
 function handleCountySelectChange(){selectedCounty=this.value;$("countyInput").value=selectedCounty;if(selectedCounty){$("allTractsCheckbox").checked=true;$("allBlockGroupsCheckbox").checked=true;selectedTract="*";selectedBlockGroup="*";}syncCounty();syncTract();syncBlockGroup();scheduleAvailabilityCheck();}
 
-function syncState(){const all=$("allStatesCheckbox").checked;$("stateSelect").disabled=all;selectedState=all?"*":$("stateSelect").value;$("stateInput").value=selectedState;}
+function syncState(){selectedState=$("stateSelect").value;$("stateSelect").disabled=false;$("stateInput").value=selectedState;}
 
-function syncCounty(){const all=$("allCountiesCheckbox").checked;$("countySelect").disabled=all||!selectedState||selectedState==="*";selectedCounty=all?"*":$("countySelect").value;$("countyInput").value=selectedCounty;}
+function syncCounty(){selectedCounty=$("countySelect").value;$("countySelect").disabled=!selectedState;$("countyInput").value=selectedCounty;}
 
 function syncTract(){selectedTract=$("allTractsCheckbox").checked?"*":digitsOnly($("tractInput").value).slice(0,6);$("tractInput").disabled=$("allTractsCheckbox").checked;}
 

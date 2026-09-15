@@ -188,7 +188,7 @@
     rows.forEach(row => {
       const geoid = censusGeoid(row, level);
       const value = Number(row[topic]);
-      if (geoid && Number.isFinite(value) && value > -666666666) values.set(geoid, value);
+      if (geoid && Number.isFinite(value)) values.set(geoid, Math.max(0, value));
     });
 
     let matched = 0;
@@ -208,28 +208,47 @@
   }
 
   function quantileBreaks(values, classes) {
-    const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+    const sorted = values.filter(Number.isFinite).map(value => Math.max(0, value)).sort((a, b) => a - b);
     if (!sorted.length) return [];
-    const breaks = [];
+    const candidates = [];
     for (let i = 0; i <= classes; i += 1) {
       const position = (sorted.length - 1) * i / classes;
       const low = Math.floor(position);
       const high = Math.ceil(position);
       const fraction = position - low;
-      breaks.push(sorted[low] + (sorted[high] - sorted[low]) * fraction);
+      candidates.push(sorted[low] + (sorted[high] - sorted[low]) * fraction);
     }
-    return breaks;
+    // Mapbox step/interpolate stops must be strictly ascending. Quantiles often
+    // repeat when many geographies have the same value, especially zero.
+    return candidates.filter((value, index, array) => index === 0 || value > array[index - 1]);
+  }
+
+  function colorForIndex(index, count) {
+    if (count <= 1) return COLORS[Math.floor(COLORS.length / 2)];
+    return COLORS[Math.round(index * (COLORS.length - 1) / (count - 1))];
   }
 
   function colorExpression(breaks) {
-    if (breaks.length < 6) return "#dce6f2";
-    return ["case",
-      ["==", ["get", "__value"], null], "rgba(220,230,242,0.35)",
-      ["step", ["to-number", ["get", "__value"]],
-        COLORS[0], breaks[1], COLORS[1], breaks[2], COLORS[2],
-        breaks[3], COLORS[3], breaks[4], COLORS[4]
-      ]
-    ];
+    if (!breaks.length) return "rgba(0,0,0,0)";
+    const noData = ["==", ["get", "__value"], null];
+    if (breaks.length === 1) {
+      return ["case", noData, "rgba(0,0,0,0)", COLORS[2]];
+    }
+    if (breaks.length === 2) {
+      // A step expression with no stops has only two arguments and is invalid.
+      // Two unique values use a valid two-stop interpolation instead.
+      return ["case", noData, "rgba(0,0,0,0)", [
+        "interpolate", ["linear"], ["to-number", ["get", "__value"]],
+        breaks[0], COLORS[0], breaks[1], COLORS[COLORS.length - 1]
+      ]];
+    }
+    const thresholds = breaks.slice(1, -1);
+    const outputCount = thresholds.length + 1;
+    const step = ["step", ["to-number", ["get", "__value"]], colorForIndex(0, outputCount)];
+    thresholds.forEach((threshold, index) => {
+      step.push(threshold, colorForIndex(index + 1, outputCount));
+    });
+    return ["case", noData, "rgba(0,0,0,0)", step];
   }
 
   function formatMapNumber(value) {
@@ -245,12 +264,17 @@
 
   function drawLegend(breaks, topic) {
     const legend = el("mapLegend");
-    if (!legend || breaks.length < 6) {
+    if (!legend || !breaks.length) {
       if (legend) legend.innerHTML = "";
       return;
     }
-    legend.innerHTML = `<strong>${escape(friendlyName(topic))}</strong>` + COLORS.map((color, i) =>
-      `<div class="legend-row"><span style="background:${color}"></span>${formatMapNumber(breaks[i])} to ${formatMapNumber(breaks[i + 1])}</div>`
+    if (breaks.length === 1) {
+      legend.innerHTML = `<strong>${escape(friendlyName(topic))}</strong><div class="legend-row"><span style="background:${COLORS[2]}"></span>${formatMapNumber(breaks[0])}</div>`;
+      return;
+    }
+    const intervals = breaks.length - 1;
+    legend.innerHTML = `<strong>${escape(friendlyName(topic))}</strong>` + Array.from({length: intervals}, (_, i) =>
+      `<div class="legend-row"><span style="background:${colorForIndex(i, intervals)}"></span>${formatMapNumber(breaks[i])} to ${formatMapNumber(breaks[i + 1])}</div>`
     ).join("");
   }
 

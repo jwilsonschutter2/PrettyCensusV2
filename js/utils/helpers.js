@@ -9,8 +9,8 @@ function allPresetTableIds(){return Array.from(new Set(variableDefinitions().map
 
 function escapeHtml(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
 
-function toNumberOrBlank(v){if(v===undefined||v===null||v==="")return"";const n=Number(v);return Number.isFinite(n)?n:v;}
+function toNumberOrBlank(v){if(v===undefined||v===null||v==="")return"";const n=Number(v);return Number.isFinite(n)?Math.max(0,n):v;}
 
-function formatCell(v){return typeof v==="number"?Number.isInteger(v)?String(v):v.toFixed(2):v;}
+function formatCell(v){const n=Number(v);if(v!==""&&v!==null&&v!==undefined&&Number.isFinite(n)&&n<0)v=0;return typeof v==="number"?Number.isInteger(v)?String(v):v.toFixed(2):v;}
 
 function csvEscape(v){const s=v===null||v===undefined?"":String(v);return /[",\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s;}
