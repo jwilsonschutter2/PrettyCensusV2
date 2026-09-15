@@ -8,7 +8,8 @@ Essentially, this just automates some fairly annoying basic census GIS work and 
 
 You need both a Census API key, and a mapbox js token to use this. You can sign up for both here: https://api.census.gov/data/key_signup.html and here: https://www.mapbox.com/ 
 
-Just choose the year, the tables, etc. If you want to make your own tables (or even just have an ai find you what tables you need) use https://github.com/jwilsonschutter2/PrettyCensusV2/blob/main/js/preset-table-library.js 
+Just choose the year, the tables, etc. If you want to make your own tables (or even just have an ai find you what tables you need) use https://github.com/jwilsonschutter2/PrettyCensusV2/blob/main/js/preset-table-library.js  
+If there's any typical census data / table I missed that you think is a common thing that can be used universally and you want it added please email me at wilsonschutterj@cdmsmith.com 
 
 The change map isn't perfect, but overall this should be a good time saver for 90% of census work on the back end, assuming change maps are simple this should work, will be looking into updating this census.
 
