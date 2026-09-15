@@ -12,5 +12,6 @@ Just choose the year, the tables, etc. If you want to make your own tables (or e
 
 The change map isn't perfect, but overall this should be a good time saver for 90% of census work on the back end, assuming change maps are simple this should work, will be looking into updating this census.
 
-I kinda dislike https://www.nhgis.org/annual-tract-estimates just due to the fact that it's like 2014 and 2015 changes to tracts and bgs in alaska, meaning you'd have to resolve and backtrack like 3 maps to get what you want.
+I kinda dislike https://www.nhgis.org/annual-tract-estimates just due to the fact that it's like 2014 and 2015 changes to tracts and bgs in alaska, meaning you'd have to resolve and backtrack like 4 maps to get what you want if you want a 2012-2022 map for 10 year change.
+This is such a dynamic change and would require essentially endless upkeep to maintain that I would rather just figure out a methodology and math it out properly to resolve conflicts prior to relying on nhgis. 
 I'm trying to automate this on my own without a reliance on nhgis for future proofing but we'll see how it goes, the current version works well unless doing something for like LA county where you may still need some manual resolving of data. 
