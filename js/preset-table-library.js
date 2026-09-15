@@ -4,7 +4,7 @@
  */
 const PRESET_TABLE_LIBRARY = [
   { name: 'Economic', items: [
-    { id: 'median-household-income', label: 'Median Household Income', variables: [{ id: 'B19013_001E', displayName: 'Median Household Income Estimate', shortName: 'Median Household Income', exportName: 'median_household_income_estimate', mapLabel: 'Median Household Income Estimate ($)' }, { id: 'B19013_002E', displayName: 'Median Household Income Margin of Error', shortName: 'Median Household Income MOE', exportName: 'median_household_income_margin_of_error', mapLabel: 'Median Household Income Margin of Error' }] },
+    { id: 'median-household-income', label: 'Median Household Income', variables: [{ id: 'B19013_001E', displayName: 'Median Household Income Estimate', shortName: 'Median Household Income', exportName: 'median_household_income_estimate', mapLabel: 'Median Household Income Estimate ($)' }] },
     { id: 'per_capita_income', label: 'Per Capita Income', variables: [{ id: 'B19301_001E', displayName: 'Per Capita Income', shortName: 'Per Capita Income', exportName: 'per_capita_income', mapLabel: 'Per Capita Income ($)' }] },
     { id: 'median_home_value', label: 'Median Home Value', variables: [{ id: 'B25077_001E', displayName: 'Median Home Value', shortName: 'Median Home Value', exportName: 'median_home_value', mapLabel: 'Median Home Value ($)' }] },
     { id: 'median_gross_rent', label: 'Median Gross Rent', variables: [{ id: 'B25064_001E', displayName: 'Median Gross Rent', shortName: 'Median Gross Rent', exportName: 'median_gross_rent', mapLabel: 'Median Gross Rent ($)' }] },
