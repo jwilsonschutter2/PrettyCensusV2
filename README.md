@@ -1,37 +1,18 @@
-# PrettyCensus mapping update
+#Link
 
-This build replaces the Mapping Option placeholder with a Mapbox GL JS choropleth workflow.
+https://jwilsonschutter2.github.io/SuperNiceCensus/
 
-https://jwilsonschutter2.github.io/PrettyCensusV2/
+#General Methodology / Thoughts
 
-## Run
-Serve this folder through a local web server or GitHub Pages. Do not open index.html directly with file:// because browser fetch and CORS rules may block API and tile requests.
+Census API queries and added mapping made easy.
 
-## Mapping workflow
-1. Enter and save a Census API key.
-2. Select year, dataset, Tract or Block Group, state, county, and table variable.
-3. Open Mapping Option.
-4. Enter a Mapbox public access token and select a mapped variable.
-5. Click Draw map.
+#Change Methodology
 
-The code automatically selects the repository by year, builds the raw GitHub XYZ PBF template, inspects the z0 tile to discover its source-layer name, requests the selected Census variable, joins by GEOID, and applies a five-class quantile style.
+The Create Change Map tool harmonizes older Census geography to newer geography using a GEOID-first approach. Exact GEOID matches are assigned directly. For changed geographies, candidate matches are identified using tract/block group numbering patterns, validated through polygon intersection, and weighted by proportional area overlap. Source values are then allocated across all qualifying target geographies using normalized overlap weights, preserving splits, merges, and other many-to-many boundary changes. Finally, harmonized historical values are compared to contemporary values to calculate numeric and percent change on a common geography framework.
 
-## Split/merge-aware Create Change Map
+## Export updates in this build
 
-Create Change Map now builds a reusable source-to-target relationship matrix in a Web Worker. The matrix is cached by year pair, state, county, and geography level.
-
-- Exact GEOID only keeps geometrically stable same-GEOID relationships.
-- Automatic and Area weighted allocate configured additive counts by normalized source-area overlap.
-- Intersections below Minimum source share are excluded as slivers.
-- Sources below Minimum source coverage are not allocated.
-- Target features are classified as direct, renumbered one-to-one, split, merge, complex, or unmatched.
-- GeoJSON output records source GEOIDs, source weights, relationship class, weighting method, and estimated status.
-- Relationship CSV exports the source-to-target matrix.
-- Validation reports direct/renumbered/split/merge/complex/unmatched counts, excluded slivers, and allocation error.
-- Non-additive variables are restricted to Exact GEOID only. Medians and percentages are not area allocated.
-- Area-mode map generation stops when allocated additive totals differ from source totals by more than 1%.
-
-
-### Project-area modal fixes
-
-The project-area instructions remain closed on page load and open only from the instructions button. The close button, backdrop, and Escape key close the modal. Manual geography selection is the default; the upload filter is opt-in. Minimum overlap at 10% is the default uploaded-area selection rule. The expanded all-sections preset library is installed.
+- Mapping Option and Create Change Map can export zipped ESRI Shapefiles next to their GeoJSON exports.
+- Fetch JSON CSV exports include a generated GEOID field and Census table documentation links above the data header.
+- Both maps resize and refit to the selected results after their Mapbox style and panel layout finish loading.
+- HTML, CSS, and JavaScript are formatted for direct human review and maintenance.

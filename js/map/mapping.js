@@ -16,6 +16,7 @@
   let map = null;
   let currentBuild = 0;
   let exportGeoJson = null;
+  let lastRenderedGeoJson = null;
 
   function el(id) {
     return document.getElementById(id);
@@ -30,12 +31,21 @@
 
   function valueOfGlobal(name, fallback) {
     try {
-      if (name === "selectedYear" && typeof selectedYear !== "undefined") return selectedYear;
-      if (name === "selectedState" && typeof selectedState !== "undefined") return selectedState;
-      if (name === "selectedCounty" && typeof selectedCounty !== "undefined") return selectedCounty;
-      if (name === "geoLevel" && typeof geoLevel !== "undefined") return geoLevel;
-      if (name === "selectedTables" && typeof selectedTables !== "undefined") return selectedTables;
-      if (name === "tableFriendlyNames" && typeof tableFriendlyNames !== "undefined") return tableFriendlyNames;
+      if (name === "selectedYear" && typeof selectedYear !== "undefined")
+        return selectedYear;
+      if (name === "selectedState" && typeof selectedState !== "undefined")
+        return selectedState;
+      if (name === "selectedCounty" && typeof selectedCounty !== "undefined")
+        return selectedCounty;
+      if (name === "geoLevel" && typeof geoLevel !== "undefined")
+        return geoLevel;
+      if (name === "selectedTables" && typeof selectedTables !== "undefined")
+        return selectedTables;
+      if (
+        name === "tableFriendlyNames" &&
+        typeof tableFriendlyNames !== "undefined"
+      )
+        return tableFriendlyNames;
     } catch (error) {
       console.debug("PrettyCensus global lookup:", error);
     }
@@ -53,12 +63,26 @@
   }
 
   function currentSelection() {
-    const year = Number(selectValue("yearSelect", valueOfGlobal("selectedYear", "")));
-    const state = digits(selectValue("stateSelect", valueOfGlobal("selectedState", "")), 2);
-    const county = digits(selectValue("countySelect", valueOfGlobal("selectedCounty", "")), 3);
-    const rawLevel = String(selectValue("geoLevel", valueOfGlobal("geoLevel", ""))).toLowerCase();
-    const level = rawLevel === "tract" ? "tract" :
-      (["blockgroup", "block group", "bg"].includes(rawLevel) ? "blockgroup" : "");
+    const year = Number(
+      selectValue("yearSelect", valueOfGlobal("selectedYear", "")),
+    );
+    const state = digits(
+      selectValue("stateSelect", valueOfGlobal("selectedState", "")),
+      2,
+    );
+    const county = digits(
+      selectValue("countySelect", valueOfGlobal("selectedCounty", "")),
+      3,
+    );
+    const rawLevel = String(
+      selectValue("geoLevel", valueOfGlobal("geoLevel", "")),
+    ).toLowerCase();
+    const level =
+      rawLevel === "tract"
+        ? "tract"
+        : ["blockgroup", "block group", "bg"].includes(rawLevel)
+          ? "blockgroup"
+          : "";
     return { year, state, county, level };
   }
 
@@ -101,11 +125,13 @@
     const tables = valueOfGlobal("selectedTables", []);
     const ids = Array.isArray(tables) ? tables : [];
 
-    select.innerHTML = '<option value="">-- Select a mapped variable --</option>';
-    ids.forEach(id => {
+    select.innerHTML =
+      '<option value="">-- Select a mapped variable --</option>';
+    ids.forEach((id) => {
       const option = document.createElement("option");
       option.value = id;
-      option.textContent = friendlyName(id) === id ? id : `${friendlyName(id)} (${id})`;
+      option.textContent =
+        friendlyName(id) === id ? id : `${friendlyName(id)} (${id})`;
       select.appendChild(option);
     });
 
@@ -131,7 +157,8 @@
     for (const key of geoidKeys) {
       if (p[key] == null) continue;
       const allDigits = String(p[key]).replace(/\D/g, "");
-      if (allDigits.length >= expectedLength) return allDigits.slice(-expectedLength);
+      if (allDigits.length >= expectedLength)
+        return allDigits.slice(-expectedLength);
     }
 
     const state = digits(p.STATEFP ?? p.STATEFP20 ?? p.STATEFP10, 2);
@@ -144,13 +171,22 @@
   }
 
   async function fetchMapRows(topic, year) {
-    if (typeof buildSingleTopicUrl !== "function" || typeof apiArrayToObjects !== "function") {
-      throw new Error("PrettyCensus Census API helper functions are not loaded before mapping.js.");
+    if (
+      typeof buildSingleTopicUrl !== "function" ||
+      typeof apiArrayToObjects !== "function"
+    ) {
+      throw new Error(
+        "PrettyCensus Census API helper functions are not loaded before mapping.js.",
+      );
     }
     const url = buildSingleTopicUrl(year, topic);
-    if (!url) throw new Error("Complete the year, dataset, state, county, and geography selections first.");
+    if (!url)
+      throw new Error(
+        "Complete the year, dataset, state, county, and geography selections first.",
+      );
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Census API request failed (${response.status}).`);
+    if (!response.ok)
+      throw new Error(`Census API request failed (${response.status}).`);
     return apiArrayToObjects(await response.json());
   }
 
@@ -159,24 +195,37 @@
     const isGzip = bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
     if (!isGzip) return new TextDecoder().decode(bytes);
     if (typeof DecompressionStream !== "function") {
-      throw new Error("This browser cannot decompress .gz files. Use a current Chrome, Edge, Firefox, or Safari release.");
+      throw new Error(
+        "This browser cannot decompress .gz files. Use a current Chrome, Edge, Firefox, or Safari release.",
+      );
     }
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    const stream = new Blob([bytes])
+      .stream()
+      .pipeThrough(new DecompressionStream("gzip"));
     return new Response(stream).text();
   }
 
   async function fetchBoundaryGeoJson(url) {
     if (GEOJSON_CACHE.has(url)) return structuredClone(GEOJSON_CACHE.get(url));
     const response = await fetch(url, { mode: "cors", cache: "force-cache" });
-    if (!response.ok) throw new Error(`Boundary request failed (${response.status}) for ${url}`);
+    if (!response.ok)
+      throw new Error(
+        `Boundary request failed (${response.status}) for ${url}`,
+      );
     const text = await responseTextFromGzip(response);
     let data;
     try {
       data = JSON.parse(text);
     } catch (error) {
-      throw new Error("The boundary file downloaded, but it was not valid gzipped GeoJSON.");
+      throw new Error(
+        "The boundary file downloaded, but it was not valid gzipped GeoJSON.",
+      );
     }
-    if (!data || data.type !== "FeatureCollection" || !Array.isArray(data.features)) {
+    if (
+      !data ||
+      data.type !== "FeatureCollection" ||
+      !Array.isArray(data.features)
+    ) {
       throw new Error("The boundary file is not a GeoJSON FeatureCollection.");
     }
     GEOJSON_CACHE.set(url, data);
@@ -185,10 +234,11 @@
 
   function attachValues(geojson, rows, topic, level) {
     const values = new Map();
-    rows.forEach(row => {
+    rows.forEach((row) => {
       const geoid = censusGeoid(row, level);
       const value = Number(row[topic]);
-      if (geoid && Number.isFinite(value) && value > -666666666) values.set(geoid, value);
+      if (geoid && Number.isFinite(value))
+        values.set(geoid, Math.max(0, value));
     });
 
     let matched = 0;
@@ -208,32 +258,72 @@
   }
 
   function quantileBreaks(values, classes) {
-    const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+    const sorted = values
+      .filter(Number.isFinite)
+      .map((value) => Math.max(0, value))
+      .sort((a, b) => a - b);
     if (!sorted.length) return [];
-    const breaks = [];
+    const candidates = [];
     for (let i = 0; i <= classes; i += 1) {
-      const position = (sorted.length - 1) * i / classes;
+      const position = ((sorted.length - 1) * i) / classes;
       const low = Math.floor(position);
       const high = Math.ceil(position);
       const fraction = position - low;
-      breaks.push(sorted[low] + (sorted[high] - sorted[low]) * fraction);
+      candidates.push(sorted[low] + (sorted[high] - sorted[low]) * fraction);
     }
-    return breaks;
+    // Mapbox step/interpolate stops must be strictly ascending. Quantiles often
+    // repeat when many geographies have the same value, especially zero.
+    return candidates.filter(
+      (value, index, array) => index === 0 || value > array[index - 1],
+    );
+  }
+
+  function colorForIndex(index, count) {
+    if (count <= 1) return COLORS[Math.floor(COLORS.length / 2)];
+    return COLORS[Math.round((index * (COLORS.length - 1)) / (count - 1))];
   }
 
   function colorExpression(breaks) {
-    if (breaks.length < 6) return "#dce6f2";
-    return ["case",
-      ["==", ["get", "__value"], null], "rgba(220,230,242,0.35)",
-      ["step", ["to-number", ["get", "__value"]],
-        COLORS[0], breaks[1], COLORS[1], breaks[2], COLORS[2],
-        breaks[3], COLORS[3], breaks[4], COLORS[4]
-      ]
+    if (!breaks.length) return "rgba(0,0,0,0)";
+    const noData = ["==", ["get", "__value"], null];
+    if (breaks.length === 1) {
+      return ["case", noData, "rgba(0,0,0,0)", COLORS[2]];
+    }
+    if (breaks.length === 2) {
+      // A step expression with no stops has only two arguments and is invalid.
+      // Two unique values use a valid two-stop interpolation instead.
+      return [
+        "case",
+        noData,
+        "rgba(0,0,0,0)",
+        [
+          "interpolate",
+          ["linear"],
+          ["to-number", ["get", "__value"]],
+          breaks[0],
+          COLORS[0],
+          breaks[1],
+          COLORS[COLORS.length - 1],
+        ],
+      ];
+    }
+    const thresholds = breaks.slice(1, -1);
+    const outputCount = thresholds.length + 1;
+    const step = [
+      "step",
+      ["to-number", ["get", "__value"]],
+      colorForIndex(0, outputCount),
     ];
+    thresholds.forEach((threshold, index) => {
+      step.push(threshold, colorForIndex(index + 1, outputCount));
+    });
+    return ["case", noData, "rgba(0,0,0,0)", step];
   }
 
   function formatMapNumber(value) {
-    return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return Number(value).toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    });
   }
 
   function escape(value) {
@@ -245,26 +335,39 @@
 
   function drawLegend(breaks, topic) {
     const legend = el("mapLegend");
-    if (!legend || breaks.length < 6) {
+    if (!legend || !breaks.length) {
       if (legend) legend.innerHTML = "";
       return;
     }
-    legend.innerHTML = `<strong>${escape(friendlyName(topic))}</strong>` + COLORS.map((color, i) =>
-      `<div class="legend-row"><span style="background:${color}"></span>${formatMapNumber(breaks[i])} to ${formatMapNumber(breaks[i + 1])}</div>`
-    ).join("");
+    if (breaks.length === 1) {
+      legend.innerHTML = `<strong>${escape(friendlyName(topic))}</strong><div class="legend-row"><span style="background:${COLORS[2]}"></span>${formatMapNumber(breaks[0])}</div>`;
+      return;
+    }
+    const intervals = breaks.length - 1;
+    legend.innerHTML =
+      `<strong>${escape(friendlyName(topic))}</strong>` +
+      Array.from(
+        { length: intervals },
+        (_, i) =>
+          `<div class="legend-row"><span style="background:${colorForIndex(i, intervals)}"></span>${formatMapNumber(breaks[i])} to ${formatMapNumber(breaks[i + 1])}</div>`,
+      ).join("");
   }
 
   function boundsFromGeoJson(geojson) {
     const bounds = new mapboxgl.LngLatBounds();
     function visit(coordinates) {
       if (!Array.isArray(coordinates)) return;
-      if (coordinates.length >= 2 && Number.isFinite(coordinates[0]) && Number.isFinite(coordinates[1])) {
+      if (
+        coordinates.length >= 2 &&
+        Number.isFinite(coordinates[0]) &&
+        Number.isFinite(coordinates[1])
+      ) {
         bounds.extend([coordinates[0], coordinates[1]]);
       } else {
         coordinates.forEach(visit);
       }
     }
-    geojson.features.forEach(feature => {
+    geojson.features.forEach((feature) => {
       if (feature.geometry) visit(feature.geometry.coordinates);
     });
     return bounds;
@@ -272,20 +375,37 @@
 
   function removeMapData() {
     if (!map) return;
-    [MAP_HOVER, MAP_LINE, MAP_FILL].forEach(id => {
+    [MAP_HOVER, MAP_LINE, MAP_FILL].forEach((id) => {
       if (map.getLayer(id)) map.removeLayer(id);
     });
     if (map.getSource(MAP_SOURCE)) map.removeSource(MAP_SOURCE);
   }
 
+  function fitMapToData(geojson, animated = false) {
+    if (!map || !geojson?.features?.length) return;
+    const bounds = boundsFromGeoJson(geojson);
+    if (bounds.isEmpty()) return;
+    map.resize();
+    map.fitBounds(bounds, {
+      padding: { top: 55, right: 55, bottom: 75, left: 55 },
+      maxZoom: 14,
+      duration: animated ? 500 : 0,
+    });
+  }
+
   function renderMap(geojson, breaks, topic) {
+    lastRenderedGeoJson = geojson;
     removeMapData();
-    map.addSource(MAP_SOURCE, { type: "geojson", data: geojson, generateId: true });
+    map.addSource(MAP_SOURCE, {
+      type: "geojson",
+      data: geojson,
+      generateId: true,
+    });
     map.addLayer({
       id: MAP_FILL,
       type: "fill",
       source: MAP_SOURCE,
-      paint: { "fill-color": colorExpression(breaks), "fill-opacity": 0.78 }
+      paint: { "fill-color": colorExpression(breaks), "fill-opacity": 0.78 },
     });
     map.addLayer({
       id: MAP_LINE,
@@ -293,26 +413,28 @@
       source: MAP_SOURCE,
       paint: {
         "line-color": "#ffffff",
-        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.15, 10, 0.8]
-      }
+        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.15, 10, 0.8],
+      },
     });
     map.addLayer({
       id: MAP_HOVER,
       type: "line",
       source: MAP_SOURCE,
       paint: { "line-color": "#f97316", "line-width": 2 },
-      filter: ["==", ["id"], -1]
+      filter: ["==", ["id"], -1],
     });
 
-    map.on("mousemove", MAP_FILL, event => {
+    map.on("mousemove", MAP_FILL, (event) => {
       if (!event.features || !event.features.length) return;
       const feature = event.features[0];
       map.setFilter(MAP_HOVER, ["==", ["id"], feature.id]);
       const properties = feature.properties || {};
-      const value = properties.__value == null ? null : Number(properties.__value);
+      const value =
+        properties.__value == null ? null : Number(properties.__value);
       const readout = el("mapReadout");
       if (readout) {
-        readout.innerHTML = `<strong>GEOID:</strong> ${escape(properties.__geoid || "Unknown")}<br>` +
+        readout.innerHTML =
+          `<strong>GEOID:</strong> ${escape(properties.__geoid || "Unknown")}<br>` +
           `<strong>${escape(friendlyName(topic))}:</strong> ${value == null ? "No data" : formatMapNumber(value)}`;
       }
       map.getCanvas().style.cursor = "pointer";
@@ -323,8 +445,8 @@
       map.getCanvas().style.cursor = "";
     });
 
-    const bounds = boundsFromGeoJson(geojson);
-    if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 30, duration: 0 });
+    fitMapToData(geojson);
+    map.once("idle", () => fitMapToData(geojson));
     drawLegend(breaks, topic);
   }
 
@@ -336,32 +458,66 @@
     const selection = currentSelection();
     const boundary = boundaryUrl(selection);
 
-    if (!token) return setStatus("Enter a Mapbox public access token.", "error");
-    if (!topic) return setStatus("Select one of the Census variables already chosen above.", "error");
+    if (!token)
+      return setStatus("Enter a Mapbox public access token.", "error");
+    if (!topic)
+      return setStatus(
+        "Select one of the Census variables already chosen above.",
+        "error",
+      );
     if (!boundary) {
-      const detail = selection.year === 2010 && selection.level === "tract" && !selection.county
-        ? "2010 tract mapping requires a county selection."
-        : "Mapping requires 2010-2024, one state, and Tract or Block Group geography.";
+      const detail =
+        selection.year === 2010 &&
+        selection.level === "tract" &&
+        !selection.county
+          ? "2010 tract mapping requires a county selection."
+          : "Mapping requires 2010-2024, one state, and Tract or Block Group geography.";
       return setStatus(detail, "error");
     }
 
     try {
-      setStatus("Loading Census values and gzipped GeoJSON boundaries...", "checking");
+      setStatus(
+        "Loading Census values and gzipped GeoJSON boundaries...",
+        "checking",
+      );
       console.log("PrettyCensus boundary URL:", boundary);
       const [rows, geojson] = await Promise.all([
         fetchMapRows(topic, selection.year),
-        fetchBoundaryGeoJson(boundary)
+        fetchBoundaryGeoJson(boundary),
       ]);
       if (buildId !== currentBuild) return;
 
       const joined = attachValues(geojson, rows, topic, selection.level);
-      if (!joined.values.size) throw new Error("The Census response did not contain numeric values to map.");
-      if (!joined.matched) throw new Error("No boundary GEOIDs matched the Census API response.");
-      const breaks = quantileBreaks(Array.from(joined.values.values()), 5);
-      exportGeoJson = structuredClone(geojson);
+      if (!joined.values.size)
+        throw new Error(
+          "The Census response did not contain numeric values to map.",
+        );
+      if (!joined.matched)
+        throw new Error("No boundary GEOIDs matched the Census API response.");
+      const filteredGeoJson = filterFeatureCollectionToChosenGeography(
+        geojson,
+        selection.level,
+      );
+      if (!filteredGeoJson.features.length)
+        throw new Error(
+          "No mapped features remain inside the chosen geography.",
+        );
+      geojson.features = filteredGeoJson.features;
+      const breaks = quantileBreaks(
+        geojson.features
+          .map((f) => Number(f.properties?.__value))
+          .filter(Number.isFinite),
+        5,
+      );
+      exportGeoJson = compactFeatureCollection(structuredClone(geojson), [
+        "__geoid",
+        "__value",
+      ]);
       window.prettyCensusCurrentGeoJSON = exportGeoJson;
       const geoBtn = el("exportMapGeoJsonBtn");
       if (geoBtn) geoBtn.disabled = false;
+      const shpBtn = el("exportMapShapefileBtn");
+      if (shpBtn) shpBtn.disabled = false;
 
       mapboxgl.accessToken = token;
       if (!map) {
@@ -369,12 +525,16 @@
           container: "prettyCensusMap",
           style: "mapbox://styles/mapbox/light-v11",
           center: [-96, 38],
-          zoom: 3
+          zoom: 3,
         });
         map.addControl(new mapboxgl.NavigationControl(), "top-right");
-        map.on("error", event => {
-          const message = event && event.error ? event.error.message : "Unknown Mapbox error";
-          console.error("Mapbox GL error:", event && event.error ? event.error : event);
+        map.on("error", (event) => {
+          const message =
+            event && event.error ? event.error.message : "Unknown Mapbox error";
+          console.error(
+            "Mapbox GL error:",
+            event && event.error ? event.error : event,
+          );
           setStatus(`Mapbox error: ${message}`, "error");
         });
       }
@@ -382,7 +542,10 @@
       const render = () => {
         if (buildId !== currentBuild) return;
         renderMap(geojson, breaks, topic);
-        setStatus(`Mapped ${joined.matched.toLocaleString()} of ${geojson.features.length.toLocaleString()} boundaries.`, "success");
+        setStatus(
+          `Mapped ${joined.matched.toLocaleString()} of ${geojson.features.length.toLocaleString()} boundaries.`,
+          "success",
+        );
       };
       // map.loaded() can be false while ordinary source/tile work is pending even
       // though the style's one-time "load" event has already fired. Waiting for
@@ -394,7 +557,8 @@
       }
     } catch (error) {
       console.error(error);
-      if (buildId === currentBuild) setStatus(error.message || String(error), "error");
+      if (buildId === currentBuild)
+        setStatus(error.message || String(error), "error");
     }
   }
 
@@ -406,22 +570,60 @@
 
     if (button && panel) {
       button.addEventListener("click", () => {
-        panel.style.display = panel.style.display === "none" || !panel.style.display ? "block" : "none";
+        panel.style.display =
+          panel.style.display === "none" || !panel.style.display
+            ? "block"
+            : "none";
         populateVariableOptions();
-        if (panel.style.display === "block") panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (panel.style.display === "block")
+          panel.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
-    if (close && panel) close.addEventListener("click", () => { panel.style.display = "none"; });
+    if (close && panel)
+      close.addEventListener("click", () => {
+        panel.style.display = "none";
+      });
     if (draw) draw.addEventListener("click", buildMap);
     const exportBtn = el("exportMapGeoJsonBtn");
-    if (exportBtn) exportBtn.addEventListener("click", () => {
-      if (!exportGeoJson || typeof downloadGeoJson !== "function") return;
-      downloadGeoJson(exportGeoJson, `prettycensus_${selectedYear}_${geoLevel}_${selectedState}_${selectedCounty}.geojson`);
+    if (exportBtn)
+      exportBtn.addEventListener("click", () => {
+        if (!exportGeoJson || typeof downloadGeoJson !== "function") return;
+        downloadGeoJson(
+          exportGeoJson,
+          `prettycensus_${selectedYear}_${geoLevel}_${selectedState}_${selectedCounty}.geojson`,
+        );
+      });
+    const shapefileBtn = el("exportMapShapefileBtn");
+    if (shapefileBtn)
+      shapefileBtn.addEventListener("click", async () => {
+        try {
+          await downloadShapefile(
+            exportGeoJson,
+            `prettycensus_${selectedYear}_${geoLevel}_${selectedState}_${selectedCounty}.zip`,
+          );
+        } catch (error) {
+          setStatus(error.message || String(error), "error");
+        }
+      });
+
+    window.addEventListener("resize", () => {
+      if (map && lastRenderedGeoJson) fitMapToData(lastRenderedGeoJson);
     });
 
-    document.addEventListener("change", event => {
-      if (["yearSelect", "datasetSelect", "geoLevel", "stateSelect", "countySelect", "tractInput", "blockGroupInput", "tableInput"].includes(event.target.id) ||
-          event.target.classList.contains("presetCheckbox")) {
+    document.addEventListener("change", (event) => {
+      if (
+        [
+          "yearSelect",
+          "datasetSelect",
+          "geoLevel",
+          "stateSelect",
+          "countySelect",
+          "tractInput",
+          "blockGroupInput",
+          "tableInput",
+        ].includes(event.target.id) ||
+        event.target.classList.contains("presetCheckbox")
+      ) {
         populateVariableOptions();
       }
     });

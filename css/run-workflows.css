@@ -13,18 +13,76 @@
   text-align: left;
   font-size: 15px;
 }
-.workflow-accordion > .workflow-toggle::after { content: "+"; font-size: 20px; line-height: 1; }
-.workflow-accordion > .workflow-toggle[aria-expanded="true"] { color: #fff; background: var(--primary); border-color: var(--primary); }
-.workflow-accordion > .workflow-toggle[aria-expanded="true"]::after { content: "−"; }
-.workflow-panel, .workflow-accordion > .tool-panel { margin-top: 8px; }
-.workflow-subactions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
-.workflow-subactions .primary-option { color: #fff; background: var(--primary); border-color: var(--primary); }
-.comparison-output-actions { padding-top: 4px; border-top: 1px solid #d7e3f3; }
-.comparison-output-actions .active-view { color: #fff; background: var(--primary); border-color: var(--primary); }
-#changeMapPanel { margin-top: 14px; background: #fff; }
-#jsonTableContainer, #comparisonTableContainer { overflow-x: auto; }
-@media (max-width: 620px) {
-  .workflow-subactions { display: grid; grid-template-columns: 1fr; }
-  .workflow-subactions button { width: 100%; }
+.workflow-accordion > .workflow-toggle::after {
+  content: "+";
+  font-size: 20px;
+  line-height: 1;
 }
-.change-map-controls{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:12px;align-items:end}.change-map-qa{margin:12px 0;padding:10px;border:1px solid #d7e3f3;border-radius:10px;background:#fff}@media(max-width:700px){.change-map-controls{grid-template-columns:1fr}}
+.workflow-accordion > .workflow-toggle[aria-expanded="true"] {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.workflow-accordion > .workflow-toggle[aria-expanded="true"]::after {
+  content: "−";
+}
+.workflow-panel,
+.workflow-accordion > .tool-panel {
+  margin-top: 8px;
+}
+.workflow-subactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.workflow-subactions .primary-option {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.comparison-output-actions {
+  padding-top: 4px;
+  border-top: 1px solid #d7e3f3;
+}
+.comparison-output-actions .active-view {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+#changeMapPanel {
+  margin-top: 14px;
+  background: #fff;
+}
+#jsonTableContainer,
+#comparisonTableContainer {
+  overflow-x: auto;
+}
+@media (max-width: 620px) {
+  .workflow-subactions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .workflow-subactions button {
+    width: 100%;
+  }
+}
+.change-map-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.change-map-qa {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid #d7e3f3;
+  border-radius: 10px;
+  background: #fff;
+}
+@media (max-width: 700px) {
+  .change-map-controls {
+    grid-template-columns: 1fr;
+  }
+}

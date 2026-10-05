@@ -1,4 +1,82 @@
 /** Multi-column preset selector. */
-function wireDropdownEvents(){const dd=$("presetDropdown"),toggle=$("presetDropdownToggle"),menu=$("presetDropdownMenu");toggle.addEventListener("click",e=>{e.stopPropagation();dd.classList.toggle("open")});menu.addEventListener("click",e=>e.stopPropagation());document.addEventListener("click",()=>dd.classList.remove("open"));menu.addEventListener("change",e=>{if(e.target.classList.contains("presetCheckbox"))updateSelectedTablesFromUI()});$("presetSelectAll").addEventListener("click",()=>{document.querySelectorAll(".presetCheckbox:not(:disabled)").forEach(cb=>cb.checked=true);updateSelectedTablesFromUI()});$("presetClearAll").addEventListener("click",()=>{document.querySelectorAll(".presetCheckbox").forEach(cb=>cb.checked=false);updateSelectedTablesFromUI()});$("tableInput").addEventListener("input",updateSelectedTablesFromUI);$("tableSearch").addEventListener("input",function(){const term=this.value.toLowerCase().trim();document.querySelectorAll(".table-card").forEach(c=>c.style.display=c.innerText.toLowerCase().includes(term)?"":"none")})}
-function renderPresetCheckboxesGrouped(){const list=$("presetCheckboxList");list.innerHTML="";PRESET_TABLE_LIBRARY.forEach(group=>{const wrap=document.createElement("div");wrap.className="checkbox-group";const title=document.createElement("div");title.className="checkbox-group__title";title.textContent=group.name;wrap.appendChild(title);group.items.forEach(item=>{const label=document.createElement("label");label.className="table-card";label.dataset.presetId=item.id;label.setAttribute("for",`preset_${item.id}`);label.innerHTML=`<input class="presetCheckbox" id="preset_${item.id}" type="checkbox" value="${item.id}"><div><div class="table-card__title">${escapeHtml(item.label)}</div><div class="table-card__id">${escapeHtml(item.variables.map(v=>`${v.displayName} (${v.id})`).join(", "))}</div><div class="table-card__message"></div></div>`;wrap.appendChild(label)});list.appendChild(wrap)})}
-function updateSelectedTablesFromUI(){const checked=Array.from(document.querySelectorAll(".presetCheckbox:checked")).map(cb=>cb.value);const presetVariables=checked.flatMap(id=>(presetById(id)?.variables||[]).map(v=>v.id));const custom=$("tableInput").value.trim()?$("tableInput").value.trim().split(/[\s,]+/).map(id=>id.toUpperCase()):[];selectedTables=Array.from(new Set([...presetVariables,...custom].filter(Boolean)));$("presetDropdownToggle").childNodes[0].nodeValue=checked.length?` ${checked.length} preset${checked.length===1?"":"s"} selected (${selectedTables.length} columns) `:" Select pre-set tables ";window.populateChangeMapVariables?.()}
+function wireDropdownEvents() {
+  const dd = $("presetDropdown"),
+    toggle = $("presetDropdownToggle"),
+    menu = $("presetDropdownMenu");
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dd.classList.toggle("open");
+  });
+  menu.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => dd.classList.remove("open"));
+  menu.addEventListener("change", (e) => {
+    if (e.target.classList.contains("presetCheckbox"))
+      updateSelectedTablesFromUI();
+  });
+  $("presetSelectAll").addEventListener("click", () => {
+    document
+      .querySelectorAll(".presetCheckbox:not(:disabled)")
+      .forEach((cb) => (cb.checked = true));
+    updateSelectedTablesFromUI();
+  });
+  $("presetClearAll").addEventListener("click", () => {
+    document
+      .querySelectorAll(".presetCheckbox")
+      .forEach((cb) => (cb.checked = false));
+    updateSelectedTablesFromUI();
+  });
+  $("tableInput").addEventListener("input", updateSelectedTablesFromUI);
+  $("tableSearch").addEventListener("input", function () {
+    const term = this.value.toLowerCase().trim();
+    document
+      .querySelectorAll(".table-card")
+      .forEach(
+        (c) =>
+          (c.style.display = c.innerText.toLowerCase().includes(term)
+            ? ""
+            : "none"),
+      );
+  });
+}
+function renderPresetCheckboxesGrouped() {
+  const list = $("presetCheckboxList");
+  list.innerHTML = "";
+  PRESET_TABLE_LIBRARY.forEach((group) => {
+    const wrap = document.createElement("div");
+    wrap.className = "checkbox-group";
+    const title = document.createElement("div");
+    title.className = "checkbox-group__title";
+    title.textContent = group.name;
+    wrap.appendChild(title);
+    group.items.forEach((item) => {
+      const label = document.createElement("label");
+      label.className = "table-card";
+      label.dataset.presetId = item.id;
+      label.setAttribute("for", `preset_${item.id}`);
+      label.innerHTML = `<input class="presetCheckbox" id="preset_${item.id}" type="checkbox" value="${item.id}"><div><div class="table-card__title">${escapeHtml(item.label)}</div><div class="table-card__id">${escapeHtml(item.variables.map((v) => `${v.displayName} (${v.id})`).join(", "))}</div><div class="table-card__message"></div></div>`;
+      wrap.appendChild(label);
+    });
+    list.appendChild(wrap);
+  });
+}
+function updateSelectedTablesFromUI() {
+  const checked = Array.from(
+    document.querySelectorAll(".presetCheckbox:checked"),
+  ).map((cb) => cb.value);
+  const presetVariables = checked.flatMap((id) =>
+    (presetById(id)?.variables || []).map((v) => v.id),
+  );
+  const custom = $("tableInput").value.trim()
+    ? $("tableInput")
+        .value.trim()
+        .split(/[\s,]+/)
+        .map((id) => id.toUpperCase())
+    : [];
+  selectedTables = Array.from(
+    new Set([...presetVariables, ...custom].filter(Boolean)),
+  );
+  $("presetDropdownToggle").childNodes[0].nodeValue = checked.length
+    ? ` ${checked.length} preset${checked.length === 1 ? "" : "s"} selected (${selectedTables.length} columns) `
+    : " Select pre-set tables ";
+  window.populateChangeMapVariables?.();
+}

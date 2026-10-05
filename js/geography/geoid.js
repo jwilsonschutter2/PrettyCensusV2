@@ -1,1 +1,26 @@
-window.PrettyCensusGeoid=(()=>{const d=(v,n)=>{const m=String(v??"").match(/\d+/);return m?m[0].padStart(n,"0").slice(-n):"";};function fromRow(r,l){const t=d(r.state,2)+d(r.county,3)+d(r.tract,6);return l==="blockgroup"?t+d(r["block group"],1):t;}function fromFeature(f,l){const p=f.properties||{},n=l==="blockgroup"?12:11;for(const k of ["GEOID","GEOID20","GEOID10","geoid","AFFGEOID"]){const x=String(p[k]??"").replace(/\D/g,"");if(x.length>=n)return x.slice(-n);}const t=d(p.STATEFP??p.STATEFP20??p.STATEFP10,2)+d(p.COUNTYFP??p.COUNTYFP20??p.COUNTYFP10,3)+d(p.TRACTCE??p.TRACTCE20??p.TRACTCE10,6);return l==="blockgroup"?t+d(p.BLKGRPCE??p.BLKGRPCE20??p.BLKGRPCE10,1):t;}return{digits:d,fromRow,fromFeature};})();
+window.PrettyCensusGeoid = (() => {
+  const d = (v, n) => {
+    const m = String(v ?? "").match(/\d+/);
+    return m ? m[0].padStart(n, "0").slice(-n) : "";
+  };
+  function fromRow(r, l) {
+    const t = d(r.state, 2) + d(r.county, 3) + d(r.tract, 6);
+    return l === "blockgroup" ? t + d(r["block group"], 1) : t;
+  }
+  function fromFeature(f, l) {
+    const p = f.properties || {},
+      n = l === "blockgroup" ? 12 : 11;
+    for (const k of ["GEOID", "GEOID20", "GEOID10", "geoid", "AFFGEOID"]) {
+      const x = String(p[k] ?? "").replace(/\D/g, "");
+      if (x.length >= n) return x.slice(-n);
+    }
+    const t =
+      d(p.STATEFP ?? p.STATEFP20 ?? p.STATEFP10, 2) +
+      d(p.COUNTYFP ?? p.COUNTYFP20 ?? p.COUNTYFP10, 3) +
+      d(p.TRACTCE ?? p.TRACTCE20 ?? p.TRACTCE10, 6);
+    return l === "blockgroup"
+      ? t + d(p.BLKGRPCE ?? p.BLKGRPCE20 ?? p.BLKGRPCE10, 1)
+      : t;
+  }
+  return { digits: d, fromRow, fromFeature };
+})();

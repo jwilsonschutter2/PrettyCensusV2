@@ -1,3 +1,78 @@
 /** Multi-variable preset availability checks. */
-function hasRequiredContextForAvailability(){if(!selectedYear||!selectedDataset||!geoLevel)return false;const p=new URLSearchParams();return geoParams(p)}function scheduleAvailabilityCheck(){clearTimeout(availabilityDebounceTimer);availabilityDebounceTimer=setTimeout(checkTableAvailabilityForCurrentGeography,350)}function setAvailabilityStatus(m,t){$("availabilityStatus").textContent=m;$("availabilityStatus").className=`availability-status ${t}`}function resetAvailabilityUI(){document.querySelectorAll(".table-card").forEach(card=>{card.classList.remove("available","unavailable","checking");const cb=card.querySelector(".presetCheckbox");if(cb)cb.disabled=false;const msg=card.querySelector(".table-card__message");if(msg)msg.textContent=""});setAvailabilityStatus("Select a year, dataset, and geography to check table availability.","muted")}function presetUrl(vars){const p=new URLSearchParams();p.set("get",`NAME,${vars.map(v=>v.id).join(",")}`);if(!geoParams(p))return"";if(apiKey)p.set("key",apiKey);return`https://api.census.gov/data/${selectedYear}/${selectedDataset}?${p}`}
-async function checkTableAvailabilityForCurrentGeography(){if(availabilityAbortController)availabilityAbortController.abort();if(!hasRequiredContextForAvailability()){resetAvailabilityUI();return}availabilityAbortController=new AbortController();const signal=availabilityAbortController.signal,presets=presetDefinitions();setAvailabilityStatus("Checking preset availability...","checking");let ok=0;for(const preset of presets){if(signal.aborted)return;const card=document.querySelector(`.table-card[data-preset-id="${preset.id}"]`),cb=card.querySelector(".presetCheckbox"),msg=card.querySelector(".table-card__message");try{const r=await fetch(presetUrl(preset.variables),{signal}),available=r.ok;card.classList.toggle("available",available);card.classList.toggle("unavailable",!available);cb.disabled=!available;if(!available)cb.checked=false;msg.textContent=available?`Available: ${preset.variables.length} columns`:"Unavailable";if(available)ok++}catch(e){if(e.name==="AbortError")return;cb.disabled=true;msg.textContent="Check failed"}}updateSelectedTablesFromUI();setAvailabilityStatus(`${ok} of ${presets.length} presets available.`,"success")}
+function hasRequiredContextForAvailability() {
+  if (!selectedYear || !selectedDataset || !geoLevel) return false;
+  const p = new URLSearchParams();
+  return geoParams(p);
+}
+function scheduleAvailabilityCheck() {
+  clearTimeout(availabilityDebounceTimer);
+  availabilityDebounceTimer = setTimeout(
+    checkTableAvailabilityForCurrentGeography,
+    350,
+  );
+}
+function setAvailabilityStatus(m, t) {
+  $("availabilityStatus").textContent = m;
+  $("availabilityStatus").className = `availability-status ${t}`;
+}
+function resetAvailabilityUI() {
+  document.querySelectorAll(".table-card").forEach((card) => {
+    card.classList.remove("available", "unavailable", "checking");
+    const cb = card.querySelector(".presetCheckbox");
+    if (cb) cb.disabled = false;
+    const msg = card.querySelector(".table-card__message");
+    if (msg) msg.textContent = "";
+  });
+  setAvailabilityStatus(
+    "Select a year, dataset, and geography to check table availability.",
+    "muted",
+  );
+}
+function presetUrl(vars) {
+  const p = new URLSearchParams();
+  p.set("get", `NAME,${vars.map((v) => v.id).join(",")}`);
+  if (!geoParams(p)) return "";
+  if (apiKey) p.set("key", apiKey);
+  return `https://api.census.gov/data/${selectedYear}/${selectedDataset}?${p}`;
+}
+async function checkTableAvailabilityForCurrentGeography() {
+  if (availabilityAbortController) availabilityAbortController.abort();
+  if (!hasRequiredContextForAvailability()) {
+    resetAvailabilityUI();
+    return;
+  }
+  availabilityAbortController = new AbortController();
+  const signal = availabilityAbortController.signal,
+    presets = presetDefinitions();
+  setAvailabilityStatus("Checking preset availability...", "checking");
+  let ok = 0;
+  for (const preset of presets) {
+    if (signal.aborted) return;
+    const card = document.querySelector(
+        `.table-card[data-preset-id="${preset.id}"]`,
+      ),
+      cb = card.querySelector(".presetCheckbox"),
+      msg = card.querySelector(".table-card__message");
+    try {
+      const r = await fetch(presetUrl(preset.variables), { signal }),
+        available = r.ok;
+      card.classList.toggle("available", available);
+      card.classList.toggle("unavailable", !available);
+      cb.disabled = !available;
+      if (!available) cb.checked = false;
+      msg.textContent = available
+        ? `Available: ${preset.variables.length} columns`
+        : "Unavailable";
+      if (available) ok++;
+    } catch (e) {
+      if (e.name === "AbortError") return;
+      cb.disabled = true;
+      msg.textContent = "Check failed";
+    }
+  }
+  updateSelectedTablesFromUI();
+  setAvailabilityStatus(
+    `${ok} of ${presets.length} presets available.`,
+    "success",
+  );
+}

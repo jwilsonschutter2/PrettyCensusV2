@@ -1,1 +1,42 @@
-window.PrettyCensusBoundaries=(()=>{const cache=new Map();function url({year,level,state,county}){const folder=level==="blockgroup"?"BG":"TRACT",file=+year===2010?(level==="blockgroup"?`tl_2010_${state}_bg10.geojson.gz`:`tl_2010_${state}${county}_tract10.geojson.gz`):`tl_${year}_${state}_${level==="blockgroup"?"bg":"tract"}.geojson.gz`;return`https://raw.githubusercontent.com/jwilsonschutter2/${year}Cenv1/main/${year}/${folder}/${file}`;}async function load(o){const u=url(o);if(!cache.has(u))cache.set(u,fetch(u,{mode:"cors",cache:"force-cache"}).then(async r=>{if(!r.ok)throw Error(`Boundary request failed (${r.status}): ${u}`);const b=new Uint8Array(await r.arrayBuffer());const text=b[0]===31&&b[1]===139?await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"))).text():new TextDecoder().decode(b);return JSON.parse(text);}));return structuredClone(await cache.get(u));}function county(g,o){const p=o.state+o.county;g.features=g.features.filter(f=>PrettyCensusGeoid.fromFeature(f,o.level).startsWith(p));return g;}return{url,load,county};})();
+window.PrettyCensusBoundaries = (() => {
+  const cache = new Map();
+  function url({ year, level, state, county }) {
+    const folder = level === "blockgroup" ? "BG" : "TRACT",
+      file =
+        +year === 2010
+          ? level === "blockgroup"
+            ? `tl_2010_${state}_bg10.geojson.gz`
+            : `tl_2010_${state}${county}_tract10.geojson.gz`
+          : `tl_${year}_${state}_${level === "blockgroup" ? "bg" : "tract"}.geojson.gz`;
+    return `https://raw.githubusercontent.com/jwilsonschutter2/${year}Cenv1/main/${year}/${folder}/${file}`;
+  }
+  async function load(o) {
+    const u = url(o);
+    if (!cache.has(u))
+      cache.set(
+        u,
+        fetch(u, { mode: "cors", cache: "force-cache" }).then(async (r) => {
+          if (!r.ok) throw Error(`Boundary request failed (${r.status}): ${u}`);
+          const b = new Uint8Array(await r.arrayBuffer());
+          const text =
+            b[0] === 31 && b[1] === 139
+              ? await new Response(
+                  new Blob([b])
+                    .stream()
+                    .pipeThrough(new DecompressionStream("gzip")),
+                ).text()
+              : new TextDecoder().decode(b);
+          return JSON.parse(text);
+        }),
+      );
+    return structuredClone(await cache.get(u));
+  }
+  function county(g, o) {
+    const p = o.state + o.county;
+    g.features = g.features.filter((f) =>
+      PrettyCensusGeoid.fromFeature(f, o.level).startsWith(p),
+    );
+    return g;
+  }
+  return { url, load, county };
+})();
