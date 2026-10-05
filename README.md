@@ -1,6 +1,6 @@
 #Link
 
-https://jwilsonschutter2.github.io/SuperNiceCensus/
+https://jwilsonschutter2.github.io/PrettyCensusV2/)
 
 #General Methodology / Thoughts
 
